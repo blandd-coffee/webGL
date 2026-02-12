@@ -7,18 +7,19 @@ import Cube from "./js/Shapes/square.js";
 gl.clearColor(0, 0.5, 0.5, 1);
 gl.enable(gl.DEPTH_TEST);
 
-const view = mat4.create();
-const projection = mat4.create();
-const model = mat4.create();
+//Create 3d Matrices
+const view = mat4.create(); //The world
+const projection = mat4.create(); // The Camera //TODO: Move to Camera class and use there
+const model = mat4.create(); //The object
 
 const program = Cube.shaderProgram.ID;
 
 let lastTime = 0;
 let rotationY = 0;
-const ROTATION_SPEED = 1.2;
+const ROTATION_SPEED = 10;
 let height = -2;
 function update(dt) {
-  height += height >= 2 ? 0.02 : -2;
+  height += height >= 2 ? -4 : 0.02;
   mat4.translate(view, mat4.create(), [0, height, -5]);
   mat4.identity(model);
   rotationY += dt * ROTATION_SPEED;
