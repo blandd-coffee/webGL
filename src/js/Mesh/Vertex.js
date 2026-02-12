@@ -1,5 +1,5 @@
-export function vertices(vertex) {
-  return vertex.flat();
+export function shape(vertices) {
+  return vertices.map((vertex) => vertex.flat());
 }
 
 export function vertex(x, y, z) {

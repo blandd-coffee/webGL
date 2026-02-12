@@ -1,16 +1,17 @@
 import { gl } from "../setup.js";
+import { EBO } from "./EBO.js";
 import { VBO } from "./VBO.js";
 
 export class VAO {
   ID;
-  vertices;
   VBO;
+  EBO;
 
-  constructor(vertices) {
+  constructor(vertices, indices = null) {
     this.ID = gl.createVertexArray();
-    this.vertices = vertices;
-
-    this.VBO = new VBO(this.vertices);
+    this.bind();
+    if (indices) this.EBO = new EBO(indices);
+    this.VBO = new VBO(vertices);
   }
 
   bind() {
