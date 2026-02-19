@@ -1,4 +1,4 @@
-import { gl } from "../setup.js";
+import { gl } from "../setup.ts";
 
 export class EBO {
   id;

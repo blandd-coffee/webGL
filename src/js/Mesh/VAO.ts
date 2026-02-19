@@ -1,13 +1,13 @@
-import { gl } from "../setup.js";
+import { gl } from "../setup.ts";
 import { EBO } from "./EBO.js";
-import { VBO } from "./VBO.js";
+import { bufferAttributes, VBO } from "./VBO.ts";
 
 export class VAO {
-  ID;
-  VBO;
-  EBO;
+  ID: WebGLVertexArrayObject;
+  VBO: VBO;
+  EBO: EBO | null = null;
 
-  constructor(vertices, indices = null) {
+  constructor(vertices: Float32Array, indices: Uint32Array | null) {
     this.ID = gl.createVertexArray();
     this.bind();
     if (indices) this.EBO = new EBO(indices);
@@ -22,9 +22,9 @@ export class VAO {
     gl.bindVertexArray(null);
   }
 
-  setLocation(location, points, stride, offset) {
+  setLocationAttributes(data: bufferAttributes) {
     this.bind();
-    this.VBO.SetLocation(location, points, stride, offset);
+    this.VBO.setAttributes(data);
     this.unbind();
   }
 

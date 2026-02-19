@@ -1,5 +1,5 @@
 import { Mesh } from "../Mesh/Mesh.js";
-import { Shader } from "../Mesh/Shader.js";
+import { Shader } from "../Mesh/Shader.ts";
 import { gl } from "../setup.js";
 
 // Each vertex is: X, Y, Z,  R, G, B
