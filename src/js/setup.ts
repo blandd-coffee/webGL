@@ -23,6 +23,6 @@ const gl: WebGL2RenderingContext = glSetup(canvas);
 gl.viewport(0, 0, canvas.width, canvas.height);
 
 // Camera Setup
-const camera = new Camera("Main", [0, 1, 5], 2, 1);
+const camera = new Camera("Main", [0, 0, -6], 8, 0.2);
 
 export { canvas, gl, camera };

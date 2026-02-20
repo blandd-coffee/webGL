@@ -5,86 +5,63 @@ export class Camera {
 
   name: string;
   public cameraMatrix: mat4 = mat4.create();
-  public postition: vec3;
-  public grounded: boolean = false;
-  public velocity: vec3 = [0, 0, 0];
+  public position: vec3;
   public speed: number;
   public sensitivity: number;
 
-  //Camera Lock
   public pitch: number = 0;
   public yaw: number = 0;
 
   constructor(
     name: string,
     pos: vec3 = [0, 0, 0],
-    speed: number = 1,
-    sensitivity: number = 1,
+    speed: number = 6,
+    sensitivity: number = 0.2,
   ) {
     Camera.current = this;
     this.name = name;
-    this.postition = pos;
+    this.position = vec3.clone(pos);
     this.speed = speed;
-    this.sensitivity = sensitivity * 0.1;
-    mat4.translate(this.cameraMatrix, this.cameraMatrix, pos);
+    this.sensitivity = sensitivity * 0.01;
+    this.updateMatrix();
   }
 
   look(deltaX: number, deltaY: number): void {
-    this.yaw += deltaX * this.sensitivity * (Math.PI / 180);
-    this.pitch += deltaY * this.sensitivity * (Math.PI / 180);
+    this.yaw += deltaX * this.sensitivity;
+    this.pitch += deltaY * this.sensitivity;
 
-    if (this.pitch < -0.9) this.pitch = -0.9;
-    if (this.pitch > 0.9) this.pitch = 0.9; //Radians
+    if (this.pitch < -1.5) this.pitch = -1.5;
+    if (this.pitch > 1.5) this.pitch = 1.5;
   }
 
   public updateMatrix(): void {
     mat4.identity(this.cameraMatrix);
-    mat4.translate(this.cameraMatrix, this.cameraMatrix, this.postition);
+    mat4.translate(this.cameraMatrix, this.cameraMatrix, this.position);
 
     mat4.rotateY(this.cameraMatrix, this.cameraMatrix, this.yaw);
     mat4.rotateX(this.cameraMatrix, this.cameraMatrix, this.pitch);
   }
 
-  public updatePosition(velocities: vec3, dt: number): void {
-    //sin: left/right
-    //cos: Z - forward/backward
+  public updatePosition(input: vec3, dt: number, speedScale: number = 1): void {
     const yawSin: number = Math.sin(this.yaw);
     const yawCos: number = Math.cos(this.yaw);
 
-    const forwardX: number = yawSin;
-    const forwardZ: number = yawCos;
+    const forwardX: number = yawSin * input[2];
+    const forwardZ: number = yawCos * input[2];
 
-    const rightX: number = yawCos;
-    const rightZ: number = -yawSin;
+    const rightX: number = yawCos * input[0];
+    const rightZ: number = -yawSin * input[0];
 
-    const vx = rightX * velocities[0] + forwardX * velocities[2];
-    const vz = rightZ * velocities[0] + forwardZ * velocities[2];
+    const velocity = vec3.fromValues(
+      rightX + forwardX,
+      input[1],
+      rightZ + forwardZ,
+    );
 
-    vec3.scale(velocities, [vx, velocities[1], vz], this.speed * dt);
-
-    vec3.add(this.postition, this.postition, velocities);
-  }
-
-  public predictPosition(velocities: vec3, dt: number): vec3 {
-    const newPos: vec3 = vec3.clone(velocities);
-    //sin: left/right
-    //cos: Z - forward/backward
-    const yawSin: number = Math.sin(this.yaw);
-    const yawCos: number = Math.cos(this.yaw);
-
-    const forwardX: number = yawSin;
-    const forwardZ: number = yawCos;
-
-    const rightX: number = yawCos;
-    const rightZ: number = -yawSin;
-
-    const vx = rightX * newPos[0] + forwardX * newPos[2];
-    const vz = rightZ * newPos[0] + forwardZ * newPos[2];
-
-    vec3.scale(newPos, [vx, newPos[1], vz], this.speed * dt);
-
-    const predicted: vec3 = vec3.create();
-    vec3.add(predicted, this.postition, newPos);
-    return predicted;
+    if (vec3.length(velocity) > 0) {
+      vec3.normalize(velocity, velocity);
+      vec3.scale(velocity, velocity, this.speed * speedScale * dt);
+      vec3.add(this.position, this.position, velocity);
+    }
   }
 }

@@ -7,13 +7,51 @@
     <title>webgl</title>
   </head>
   <body style="margin: 0; padding: 0">
-    <div id="app"></div>
+    <div
+      style="
+        position: fixed;
+        z-index: 10;
+        top: 12px;
+        left: 12px;
+        background: rgba(20, 20, 20, 0.8);
+        color: #fff;
+        padding: 10px;
+        border-radius: 8px;
+        font-family: monospace;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+      "
+    >
+      <input id="stlFiles" type="file" accept=".stl" multiple />
+      <button id="loadDuck" type="button">Load Project Duck</button>
+      <label style="display: inline-flex; align-items: center; gap: 4px">
+        <input id="autoAlignToggle" type="checkbox" checked />
+        Auto-align on load
+      </label>
+      <select id="partSelect" style="max-width: 220px">
+        <option value="">Select Part</option>
+      </select>
+      <input id="partColor" type="color" value="#ffffff" />
+      <button id="applyColor" type="button">Apply Color</button>
+      <select id="rotateAxis">
+        <option value="x">X</option>
+        <option value="y">Y</option>
+        <option value="z" selected>Z</option>
+      </select>
+      <input id="rotateDegrees" type="number" value="15" step="1" style="width: 70px" />
+      <button id="rotateMinus" type="button">Rotate -</button>
+      <button id="rotatePlus" type="button">Rotate +</button>
+      <button id="mergeParts" type="button">Merge Parts</button>
+      <button id="clearScene" type="button">Clear</button>
+      <span id="sceneStatus">parts: 0</span>
+    </div>
     <canvas
       style="margin: 0; padding: 0; width: 100vw; height: 100vh"
       id="render"
     ></canvas>
 
     <script type="module" src="/src/main.ts"></script>
-    <script type="module" src="/src/js/interactions.ts"></script>
   </body>
 </html>
