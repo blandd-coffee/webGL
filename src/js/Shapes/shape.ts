@@ -1,8 +1,10 @@
 import { mat4 } from "gl-matrix";
 import { Mesh } from "../Mesh/Mesh.ts";
 import { Shader } from "../Mesh/Shader.ts";
-import { gl } from "../setup.ts";
-
+import { gl } from "../setup/setup.ts";
+/**
+ * An abstract class which defines the basic parameters that every object should have
+ */
 export abstract class Shape {
   public readonly name: string;
   public readonly mesh: Mesh;
@@ -14,13 +16,20 @@ export abstract class Shape {
     this.mesh = mesh;
   }
 
+  /**
+   * Creates a mesh based off of the given data
+   * @param name The name of the mesh
+   * @param vertices The vertices for the VBO
+   * @param indices The vertices for the EBO
+   * @returns
+   */
   protected static async createMesh(
     name: string,
     vertices: Float32Array,
     indices: Uint32Array,
   ): Promise<Mesh> {
-    const vertexSrc = await Shader.getShaderSource("vertex.vert");
-    const fragmentSrc = await Shader.getShaderSource("fragment.frag");
+    const vertexSrc = await getShaderSource("vertex.vert");
+    const fragmentSrc = await getShaderSource("fragment.frag");
 
     const mesh = new Mesh(
       name,
@@ -37,6 +46,12 @@ export abstract class Shape {
     return mesh;
   }
 
+  /**
+   * Draws the shape
+   * @param model The model matrix which determines the local orientation of the object
+   * @param view The view matrix which determines the global orientation of the object
+   * @param proj The projection matrix which determins the clip space visible
+   */
   protected draw(model: mat4, view: mat4, proj: mat4): void {
     const ID = this.mesh.shaderProgram.ID;
     gl.useProgram(ID);

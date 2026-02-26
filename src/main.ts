@@ -1,5 +1,5 @@
 import { mat4, vec3 } from "gl-matrix";
-import { camera, canvas, gl } from "./js/setup.ts";
+import { camera, canvas, gl } from "./js/setup/setup.ts";
 import { Cube, instance } from "./js/Shapes/square.ts";
 import {
   aKey,
@@ -8,34 +8,27 @@ import {
   sKey,
   spaceKey,
   wKey,
-} from "./js/interactions.ts";
+} from "./js/setup/interactions.ts";
 import { Camera } from "./js/camera/camera.ts";
-import { checkCollision, ground, init } from "./js/world/ground.ts";
+import {
+  checkCollision,
+  checkNearbyChunksMesh,
+  drawChunks,
+  World,
+} from "./js/world/ground.ts";
 import { Mesh } from "./js/Mesh/Mesh.ts";
-import { Shader } from "./js/Mesh/Shader.ts";
+import getShaderSource from "./js/utilities/filefetcher.ts";
+import { Chunk } from "./js/world/chunk.ts";
+
 //Config
 gl.clearColor(0, 0.5, 0.5, 1);
 gl.enable(gl.DEPTH_TEST);
-
+await World.initWorld();
 //Create 3d Matrices
 const view = mat4.create(); //what is visible
 const projection = mat4.create(); // Modifies what is visible
 const model = mat4.create(); // Modifies what is visible
 let lastTime = 0;
-const groundShape = init();
-const vertexSrc = await Shader.getShaderSource("vertex.vert");
-const fragmentSrc = await Shader.getShaderSource("fragment.frag");
-
-const testGround = new Mesh(
-  "ground",
-  gl.TRIANGLES,
-  groundShape.vertices,
-  groundShape.indices,
-  vertexSrc,
-  fragmentSrc,
-);
-testGround.SetLocation(0, 3, 24, 0);
-testGround.SetLocation(1, 3, 24, 12);
 
 const gravity = -1;
 function camMovement(dt: number): vec3 {
@@ -95,12 +88,8 @@ function render() {
   mat4.invert(view, Camera.current.cameraMatrix);
 
   //Render in each tile
-  testGround.shaderProgram.useProgram();
-  const ID = testGround.shaderProgram.ID;
-  gl.uniformMatrix4fv(gl.getUniformLocation(ID, "view"), false, view);
-  gl.uniformMatrix4fv(gl.getUniformLocation(ID, "model"), false, model);
-  gl.uniformMatrix4fv(gl.getUniformLocation(ID, "proj"), false, projection);
-  testGround.Draw();
+
+  drawChunks(checkNearbyChunksMesh(Chunk.chunks), view, projection, model);
 }
 
 function loop(nowMS: number) {

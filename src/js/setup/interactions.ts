@@ -8,7 +8,6 @@ let dKey: boolean = false;
 let spaceKey: boolean = false;
 let shiftKey: boolean = false;
 
-let mouse: MouseEvent | null;
 canvas?.addEventListener("click", () => {
   canvas?.requestPointerLock();
 });
@@ -33,7 +32,6 @@ document.addEventListener("keyup", (event) => {
 });
 
 document.addEventListener("mousemove", (event) => {
-  mouse = event;
   if (document.pointerLockElement !== canvas) return;
 
   let deltaX: number = -event.movementX;

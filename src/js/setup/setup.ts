@@ -1,4 +1,4 @@
-import { Camera } from "./camera/camera.ts";
+import { Camera } from "../camera/camera.ts";
 
 const glSetup = (canvas: HTMLCanvasElement | null) => {
   if (canvas === null) throw new Error("Canvas is null!");
@@ -23,6 +23,6 @@ const gl: WebGL2RenderingContext = glSetup(canvas);
 gl.viewport(0, 0, canvas.width, canvas.height);
 
 // Camera Setup
-const camera = new Camera("Main", [0, 1, 5], 2, 1);
+const camera = new Camera("Main", [0, 1, 0], 2, 1);
 
 export { canvas, gl, camera };

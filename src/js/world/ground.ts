@@ -1,168 +1,169 @@
 //Create 3d Matrices
 
-import { vec3, mat4 } from "gl-matrix";
+import { vec3, mat4, vec2 } from "gl-matrix";
 import { Cube } from "../Shapes/square.ts";
-import { camera } from "../setup.ts";
+import { camera, gl } from "../setup/setup.ts";
+import { Mesh } from "../Mesh/Mesh.ts";
+import { Shader } from "../Mesh/Shader.ts";
+import { Chunk } from "./chunk.ts";
+//X world axis
 
-//Populate the ground grid
-const size = 5; //The amount of grounds
-const spacing = 1.0; //This is the size
-const y = 0;
-const half = 0.8;
-const tiles: tile[] = [];
+export class World {
+  public static size: number = 50;
+  public static spacing: number = 1.0;
+  public static half = 0.8;
 
-for (let i = 1; i < 5; i++) {
-  for (let x = -size / 2; x < size / 2; x++) {
-    for (let z = (-size * i) / 2; z < size / 2; z++) {
-      tiles.push({ x: x * spacing * i, y: y, z: z * spacing * i });
+  public static totalChunks: number = 6;
+  public static tilesPerChunk: number = 10;
+  public static chunkSize: number;
+  public static createdChunks: Chunk[] = [];
+
+  public static async initWorld() {
+    const { totalChunks, chunkSize, size } = this;
+    World.chunkSize = this.spacing * this.size;
+    const halfChunk = totalChunks / 2;
+    const halfTileChunks = size / 2;
+
+    for (let i = 0 - halfChunk; i < halfChunk; i++) {
+      let chunk: vec2 = [];
+      for (let j = 0 - halfChunk; j < halfChunk; j++) {
+        chunk = [i, j];
+        const tiles: tile[] = [];
+
+        //x chunk axis
+        this.initChunk(tiles, chunk);
+        this.createdChunks.push(await Chunk.create(chunk[0], chunk[1], tiles));
+      }
     }
   }
-  for (let x = -size / 2; x < size / 2; x++) {
-    for (let z = -size / 2; z < size / 2; z++) {
-      tiles.push({ x: x * spacing, y: y + 3, z: z * spacing });
+
+  private static async initChunk(tiles: tile[], chunk: vec2): Promise<void> {
+    const { chunkSize, size } = this;
+    World.chunkSize = this.spacing * this.size;
+    const halfTileChunks = size / 2;
+
+    for (let x = -halfTileChunks; x < halfTileChunks; x++) {
+      for (let z = -halfTileChunks; z < halfTileChunks; z++) {
+        tiles.push({
+          x: x + chunk[0] * chunkSize,
+          y: 0,
+          z: z + chunk[1] * chunkSize,
+          chunk: chunk,
+        });
+      }
     }
   }
-}
 
-function init(): vertex {
-  return buildGround(tiles);
-}
+  public static drawChunks(
+    chunks: Mesh[],
+    view: mat4,
+    projection: mat4,
+    model: mat4,
+  ): void {
+    chunks.forEach((chunk) => {
+      const ID = chunk.shaderProgram.ID;
+      chunk.shaderProgram.useProgram();
+      gl.uniformMatrix4fv(gl.getUniformLocation(ID, "view"), false, view);
+      gl.uniformMatrix4fv(gl.getUniformLocation(ID, "proj"), false, projection);
+      gl.uniformMatrix4fv(gl.getUniformLocation(ID, "model"), false, model);
+      chunk.Draw();
+    });
+  }
 
-function checkNearby(radius: number = 2): tile[] {
-  const cam = camera.postition;
-  const r2 = radius * radius;
+  public static checkNearbyChunksMesh(
+    chunks: Chunk[],
+    radius: number = 2,
+  ): Mesh[] {
+    const cam = camera.postition;
+    const r2 = radius * radius;
 
-  return tiles.filter((t) => {
-    const dx = t.x - cam[0];
-    const dy = t.y - cam[1];
-    const dz = t.z - cam[2];
-    return dx * dx + dy * dy + dz * dz <= r2;
-  });
-}
+    const nearbyChunks = chunks.filter((c) => {
+      const dx = c.x - (cam[0] / size) * spacing;
+      const dz = c.z - (cam[2] / size) * spacing;
+      return dx * dx + dz * dz <= r2;
+    });
+    return nearbyChunks.map((chunk) => chunk.mesh);
+  }
 
-function inside(tile: tile, position: vec3): boolean {
-  const cx = tile.x,
-    cy = tile.y,
-    cz = tile.z;
+  public static checkNearbyTiles(tiles: tile[], radius: number = 2): tile[] {
+    const cam = camera.postition;
+    const r2 = radius * radius;
 
-  const x: boolean = position[0] >= cx - half && position[0] <= cx + half;
-  const y: boolean = position[1] >= cy - half && position[1] <= cy + half;
-  const z: boolean = position[2] >= cz - half && position[2] <= cz + half;
-  if (x && y && z) return false;
-  return true;
-}
+    return tiles.filter((t) => {
+      const dx = t.x - cam[0];
+      const dy = t.y - cam[1];
+      const dz = t.z - cam[2];
+      return dx * dx + dy * dy + dz * dz <= r2;
+    });
+  }
+  public static inside(tile: tile, position: vec3): boolean {
+    const cx = tile.x,
+      cy = tile.y,
+      cz = tile.z;
 
-function obstruct(vector: vec3, index: number): boolean {
-  vector[index] = 0;
-  return false;
-}
+    const x: boolean = position[0] >= cx - half && position[0] <= cx + half;
+    const y: boolean = position[1] >= cy - half && position[1] <= cy + half;
+    const z: boolean = position[2] >= cz - half && position[2] <= cz + half;
+    if (x && y && z) return false;
+    return true;
+  }
 
-function check(
-  tile: tile,
-  pass: boolean,
-  move: vec3,
-  predicted: vec3,
-  index: number,
-): boolean {
-  pass = inside(tile, predicted);
-  if (!pass) {
-    obstruct(move, index);
+  public static obstruct(vector: vec3, index: number): boolean {
+    vector[index] = 0;
     return false;
   }
-  return true;
-}
 
-function checkCollision(move: vec3, dt: number): verticalMove {
-  const cloned: vec3 = [];
-  vec3.copy(cloned, move);
-  //Booleans that allow camera movement in their respective directions
-  let passX: boolean = true;
-  let passY: boolean = true;
-  let passZ: boolean = true;
-
-  //Predict camera movement: x, y, z
-  const tryX = camera.predictPosition([move[0], 0, 0], dt);
-  const tryY = camera.predictPosition([0, move[1], 0], dt);
-  const tryZ = camera.predictPosition([0, 0, move[2]], dt);
-
-  //Optimize for only nearby grounds
-  const nearbyTile = checkNearby();
-
-  //Loop through each instance of a nearby ground
-  nearbyTile.forEach((tile) => {
-    passX = passX ? check(tile, passX, move, tryX, 0) : false;
-    passY = passY ? check(tile, passY, move, tryY, 1) : false;
-    passZ = passZ ? check(tile, passZ, move, tryZ, 2) : false;
-  });
-
-  const hitCeiling: boolean = !passY && cloned[1] > 0;
-  const hitGround: boolean = !passY && cloned[1] < 0;
-  console.log(hitGround);
-  //Update cameras position
-  return { move, hitGround, hitCeiling };
-}
-
-function buildGround(tiles: tile[]): vertex {
-  //prettier-ignore
-  const baseVertices = new Float32Array([
-      // x, y, z,    r, g, b
-      -0.5, -0.5, 0.5, 1, 0, 0,
-       0.5, -0.5, 0.5, 0, 1, 0,
-       0.5, -0.5,-0.5, 0, 0, 1,
-      -0.5, -0.5,-0.5, 1, 1, 0,
-
-      -0.5,  0.5, 0.5, 1, 0, 0,
-       0.5,  0.5, 0.5, 0, 1, 0,
-       0.5,  0.5,-0.5, 0, 0, 1,
-      -0.5,  0.5,-0.5, 1, 1, 0,
-    ]);
-  //prettier-ignore
-  const baseIndices = new Uint32Array([
-      0, 1, 5, 5, 4, 0,
-      1, 2, 6, 6, 5, 1,
-      2, 3, 7, 7, 6, 2,
-      3, 0, 4, 4, 7, 3,
-      4, 5, 6, 6, 7, 4,
-      0, 3, 2, 2, 1, 0,
-    ]);
-
-  const floatsPerVertex: number = 6;
-  const vertsPerCube: number = 8;
-  const idxPerCube: number = 36;
-
-  let vOut = 0;
-  let iOut = 0;
-  let vertexBase = 0;
-
-  const vertices = new Float32Array(
-    tiles.length * vertsPerCube * floatsPerVertex,
-  );
-
-  const indices = new Uint32Array(tiles.length * idxPerCube);
-
-  for (const t of tiles) {
-    for (let i = 0; i < baseVertices.length; i += 6) {
-      vertices[vOut++] = baseVertices[i] + t.x;
-      vertices[vOut++] = baseVertices[i + 1] + t.y;
-      vertices[vOut++] = baseVertices[i + 2] + t.z;
-      vertices[vOut++] = baseVertices[i + 3];
-      vertices[vOut++] = baseVertices[i + 4];
-      vertices[vOut++] = baseVertices[i + 5];
+  public static check(
+    tile: tile,
+    pass: boolean,
+    move: vec3,
+    predicted: vec3,
+    index: number,
+  ): boolean {
+    pass = inside(tile, predicted);
+    if (!pass) {
+      obstruct(move, index);
+      return false;
     }
-
-    for (let i = 0; i < baseIndices.length; i++) {
-      indices[iOut++] = baseIndices[i] + vertexBase;
-    }
-    vertexBase += vertsPerCube;
+    return true;
   }
 
-  return { vertices, indices };
+  public static checkCollision(move: vec3, dt: number): verticalMove {
+    const cloned: vec3 = [];
+    vec3.copy(cloned, move);
+    //Booleans that allow camera movement in their respective directions
+    let passX: boolean = true;
+    let passY: boolean = true;
+    let passZ: boolean = true;
+
+    //Predict camera movement: x, y, z
+    const tryX = camera.predictPosition([move[0], 0, 0], dt);
+    const tryY = camera.predictPosition([0, move[1], 0], dt);
+    const tryZ = camera.predictPosition([0, 0, move[2]], dt);
+
+    //Optimize for only nearby grounds
+    const nearbyTile = checkNearbyTiles(checkNearbyChunks(createdChunks));
+
+    //Loop through each instance of a nearby ground
+    nearbyTile.forEach((tile) => {
+      passX = passX ? check(tile, passX, move, tryX, 0) : false;
+      passY = passY ? check(tile, passY, move, tryY, 1) : false;
+      passZ = passZ ? check(tile, passZ, move, tryZ, 2) : false;
+    });
+
+    const hitCeiling: boolean = !passY && cloned[1] > 0;
+    const hitGround: boolean = !passY && cloned[1] < 0;
+    console.log(hitGround);
+    //Update cameras position
+    return { move, hitGround, hitCeiling };
+  }
 }
 
 interface tile {
   x: number;
   y: number;
   z: number;
+  chunk: vec2;
 }
 
 interface vertex {
@@ -175,5 +176,3 @@ interface verticalMove {
   hitGround: boolean;
   hitCeiling: boolean;
 }
-
-export { init, checkCollision };

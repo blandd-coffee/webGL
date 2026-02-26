@@ -1,7 +1,7 @@
 import { mat4, vec3 } from "gl-matrix";
 import { Mesh } from "../Mesh/Mesh.ts";
 import { Shader } from "../Mesh/Shader.ts";
-import { camera, gl } from "../setup.ts";
+import { camera, gl } from "../setup/setup.ts";
 import { Shape } from "./shape.ts";
 
 export class Cube extends Shape {

@@ -1,7 +1,10 @@
-import { gl } from "../setup.ts";
+import { gl } from "../setup/setup.ts";
 import { Shader } from "./Shader.ts";
 import { VAO } from "./VAO.ts";
 
+/**
+ * A class that defines the general shape of a model
+ */
 export class Mesh {
   static meshes: Map<string, Mesh> = new Map();
   name: string;
@@ -11,6 +14,15 @@ export class Mesh {
   shaderProgram: Shader; // Instance of the Shader Class
   VAO: VAO; //instance of theVertex Array Object
 
+  /**
+   * Creates a new mesh object
+   * @param name The name of the mesh
+   * @param shape The shape of the mesh, defaulted to gl.TRIANGLES
+   * @param vertices The vertices that hold the general shape of the object
+   * @param indices The indices that hold the order vertices should be rendered
+   * @param vertexSrc The vertex shader file data
+   * @param fragmentSrc The fragment shader file data
+   */
   constructor(
     name: string,
     shape: GLuint,
@@ -29,7 +41,13 @@ export class Mesh {
     Mesh.meshes.set(name, this);
   }
 
-  //TODO Automate the location process, prollythru an array or object containing said positions
+  /**
+   * Sets the attribute locations for the VBO
+   * @param location The location attrib for the VBO
+   * @param points The point attrib
+   * @param stride The size in bytes between each point
+   * @param offset The point in bytes which controls what vertex attribute accessed
+   */
   SetLocation(
     location: number,
     points: number,
@@ -39,6 +57,9 @@ export class Mesh {
     this.VAO.setLocationAttributes({ location, points, stride, offset });
   }
 
+  /**
+   * Draws a displays the current instance of the mesh
+   */
   Draw(): void {
     const { shaderProgram, VAO } = this;
 
@@ -49,6 +70,9 @@ export class Mesh {
     } else throw new Error("No indices");
   }
 
+  /**
+   * Deletes the current instace of the mesh
+   */
   delete(): void {
     this.shaderProgram.delete();
     this.VAO.delete();

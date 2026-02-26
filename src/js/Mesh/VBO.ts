@@ -1,9 +1,16 @@
-import { gl } from "../setup.ts";
+import { gl } from "../setup/setup.ts";
 
+/**
+ * A class which contains the Vertex Buffer Array and relevant dataa
+ */
 class VBO {
-  ID: WebGLBuffer; //identifier for the buffer
+  ID: WebGLBuffer;
   vertices: Float32Array;
 
+  /**
+   * Generates a VBO based off of the given vertices
+   * @param vertices The vertices to map
+   */
   constructor(vertices: Float32Array) {
     this.ID = gl.createBuffer();
     this.vertices = vertices;
@@ -12,6 +19,10 @@ class VBO {
     gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
   }
 
+  /**
+   * Sets the attribute data for the current VBo instance
+   * @param attributes The attribute data to attribute to the current VBO instance
+   */
   setAttributes(attributes: bufferAttributes) {
     this.bind();
     gl.vertexAttribPointer(
@@ -26,14 +37,23 @@ class VBO {
     this.unbind();
   }
 
+  /**
+   * Binds the current VAO instance
+   */
   bind() {
     gl.bindBuffer(gl.ARRAY_BUFFER, this.ID);
   }
 
+  /**
+   * Unbinds the current VBO instance
+   */
   unbind() {
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
   }
 
+  /**
+   * Deletes the current VBO instance
+   */
   delete() {
     gl.deleteBuffer(this.ID);
   }
